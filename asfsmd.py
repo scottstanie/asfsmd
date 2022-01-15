@@ -19,15 +19,13 @@ import netrc
 import fnmatch
 import logging
 import pathlib
-import zipfile
 import argparse
 import warnings
 
 from urllib.parse import urlparse
 
 import tqdm
-import httpio
-import requests
+import remotezip
 import asf_search as asf
 
 
@@ -39,28 +37,6 @@ _log = logging.getLogger(__name__)
 
 
 BLOACKSIZE = 1 * 1024  # 1kb
-
-
-class HttpIOFile(httpio.SyncHTTPIOFile):
-    def open(self, session=None):
-        self._assert_not_closed()
-        if not self._closing and self._session is None:
-            self._session = requests.Session() if session is None else session
-            response = self._session.get(self.url, stream=True, **self._kwargs)
-            with response:
-                response.raise_for_status()
-                try:
-                    self.length = int(response.headers["Content-Length"])
-                except KeyError:
-                    raise httpio.HTTPIOError(
-                        "Server does not report content length"
-                    )
-                accept_ranges = response.headers.get("Accept-Ranges", "")
-                if accept_ranges.lower() != "bytes":
-                    raise httpio.HTTPIOError(
-                        "Server does not accept 'Range' headers"
-                    )
-        return self
 
 
 def query(products, auth=None):
@@ -82,11 +58,7 @@ def download_annotations_core(urls, outdir=".", auth=None,
         "S1*.SAFE/annotation/s1*.xml",
     ]
 
-    with requests.Session() as session:
-        session.auth = auth
-        _log.debug("session open")
-
-        url_iter = tqdm.tqdm(urls, unit=" products")
+    with tqdm.tqdm(urls, unit=" products") as url_iter:
         for url in url_iter:
             url_iter.set_description(url)
             product_name = pathlib.Path(urlparse(url).path).stem
@@ -98,20 +70,19 @@ def download_annotations_core(urls, outdir=".", auth=None,
 
             _log.debug(f"download: {product_name}")
 
-            remote_file = HttpIOFile(url, block_size=block_size)
-            with remote_file.open(session=session) as fd:
+            with remotezip.RemoteZip(url) as zf:
                 _log.debug(f"{url} open")
-                with zipfile.ZipFile(fd) as zf:
-                    components = []
-                    for info in zf.filelist:
-                        for pattern in patterns:
-                            if fnmatch.fnmatch(info.filename, pattern):
-                                components.append(info)
-                                break
 
-                    component_iter = tqdm.tqdm(
-                        components, unit="files", leave=False
-                    )
+                components = []
+                for info in zf.filelist:
+                    for pattern in patterns:
+                        if fnmatch.fnmatch(info.filename, pattern):
+                            components.append(info)
+                            break
+
+                component_iter = tqdm.tqdm(
+                    components, unit="files", leave=False)
+                with component_iter:
                     for info in component_iter:
                         filename = pathlib.Path(info.filename)
                         component_iter.set_description(filename.name)
