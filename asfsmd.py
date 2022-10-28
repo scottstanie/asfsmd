@@ -92,11 +92,11 @@ def download_annotations_core(urls, outdir=".", auth=None,
         "S1*.SAFE/annotation/s1*.xml": (iw_filter, pol_filter),
     }
     if do_calibration:
-        patterns["S1*.SAFE/annotation/calibration/calibration*.xml"] = (iw_filter, pol_filter),
+        patterns["S1*.SAFE/annotation/calibration/calibration*.xml"] = (iw_filter, pol_filter)
     if do_noise:
-        patterns["S1*.SAFE/annotation/calibration/noise*.xml"] = (iw_filter, pol_filter),
+        patterns["S1*.SAFE/annotation/calibration/noise*.xml"] = (iw_filter, pol_filter)
     if do_rfi:
-        patterns["S1*.SAFE/annotation/rfi/rfi*.xml"] = (iw_filter, pol_filter),
+        patterns["S1*.SAFE/annotation/rfi/rfi*.xml"] = (iw_filter, pol_filter)
 
     with requests.Session() as session:
         session.auth = auth
