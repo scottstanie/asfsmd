@@ -77,24 +77,26 @@ def query(products):
 
 
 def download_annotations_core(urls, outdir=".", auth=None,
-                              block_size=BLOCKSIZE, pol=None,
+                              block_size=BLOCKSIZE, pol=None, iw=None,
                               do_calibration=False, do_noise=False,
                               do_rfi=False):
     """Download Sentinel-1 annotation for the specified product urls."""
     outdir = pathlib.Path(outdir)
 
-    pol_filter = pol or ''  # empty string matches all polarizations
+    # empty string matches all files
+    iw_filter = '' if not iw else f'iw{iw}'
+    pol_filter = pol or ''
 
     patterns = {
-        "S1*.SAFE/manifest.safe": '',
-        "S1*.SAFE/annotation/s1*.xml": pol_filter
+        "S1*.SAFE/manifest.safe": ('', ''),
+        "S1*.SAFE/annotation/s1*.xml": (iw_filter, pol_filter),
     }
     if do_calibration:
-        patterns["S1*.SAFE/annotation/calibration/calibration*.xml"] = pol_filter
+        patterns["S1*.SAFE/annotation/calibration/calibration*.xml"] = (iw_filter, pol_filter),
     if do_noise:
-        patterns["S1*.SAFE/annotation/calibration/noise*.xml"] = pol_filter
+        patterns["S1*.SAFE/annotation/calibration/noise*.xml"] = (iw_filter, pol_filter),
     if do_rfi:
-        patterns["S1*.SAFE/annotation/rfi/rfi*.xml"] = pol_filter
+        patterns["S1*.SAFE/annotation/rfi/rfi*.xml"] = (iw_filter, pol_filter),
 
     with requests.Session() as session:
         session.auth = auth
@@ -118,11 +120,14 @@ def download_annotations_core(urls, outdir=".", auth=None,
                 with zipfile.ZipFile(fd) as zf:
                     components = []
                     for info in zf.filelist:
-                        for pattern, filter in patterns.items():
+                        for pattern, (filt1, filt2) in patterns.items():
                             if fnmatch.fnmatch(info.filename, pattern):
-                                if filter in info.filename:
-                                    components.append(info)
-                                    break
+                                if filt1 not in info.filename:
+                                    continue
+                                if filt2 not in info.filename:
+                                    continue
+                                components.append(info)
+                                break
 
                     component_iter = tqdm.tqdm(
                         components, unit="files", leave=False
@@ -145,7 +150,7 @@ def download_annotations_core(urls, outdir=".", auth=None,
 
 
 def download_annotations(products, outdir=".", auth=None, pol=None, urls=None,
-                         do_calibration=False, do_noise=False, do_rfi=False):
+                         iw=None, do_calibration=False, do_noise=False, do_rfi=False):
     """Download annotations for the specified Sentinel-1 products."""
     if urls is None:
         results = query(products)
@@ -157,7 +162,7 @@ def download_annotations(products, outdir=".", auth=None, pol=None, urls=None,
 
         urls = [item.properties["url"] for item in results]
 
-    download_annotations_core(urls, outdir=outdir, auth=auth, pol=pol,
+    download_annotations_core(urls, outdir=outdir, auth=auth, pol=pol, iw=iw,
                               do_calibration=do_calibration, do_noise=do_noise,
                               do_rfi=do_rfi)
 
@@ -305,6 +310,7 @@ def _get_parser(subparsers=None):
         default=BLOCKSIZE,
         help="httpio block size in bytes (default: %(default)d)",
     )
+
     # Optional filters
     parser.add_argument(
         "--pol",
@@ -313,7 +319,15 @@ def _get_parser(subparsers=None):
         type=str.lower,
         help="Choose only one polarization to download. "
         "If not provided both polarizations are downloaded."
-    ) 
+    )
+    parser.add_argument(
+        "-iw",
+        "--subswath",
+        choices=[1, 2, 3],
+        type=int,
+        help="Choose only one subswath to download. "
+        "If not provided, files for IW 1,2 and 3 are downloaded."
+    )
 
     # Additional file downloads
     parser.add_argument(
@@ -407,8 +421,8 @@ def main(*argv):
             outpath = outroot / folder
             download_annotations(
                 products, outdir=outpath, auth=auth, pol=args.pol, urls=args.urls,
-                do_calibration=args.do_calibration, do_noise=args.do_noise,
-                do_rfi=args.do_rfi
+                iw=args.subswath, do_calibration=args.do_calibration,
+                do_noise=args.do_noise, do_rfi=args.do_rfi
             )
         
     except Exception as exc:
