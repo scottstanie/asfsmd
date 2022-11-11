@@ -29,7 +29,7 @@ import collections
 from typing import Dict, List, Union
 from urllib.parse import urlparse
 
-import tqdm
+from tqdm.auto import tqdm
 import httpio
 import requests
 import asf_search as asf
@@ -101,7 +101,7 @@ def download_components_from_urls(urls, patterns, outdir=".", auth=None,
         session.auth = auth
         _log.debug("session open")
 
-        url_iter = tqdm.tqdm(urls, unit=" products")
+        url_iter = tqdm(urls, unit=" products")
         for url in url_iter:
             url_iter.set_description(url)
             product_name = pathlib.Path(urlparse(url).path).stem
@@ -125,7 +125,7 @@ def download_components_from_urls(urls, patterns, outdir=".", auth=None,
                                     components.append(info)
                                     break
 
-                    component_iter = tqdm.tqdm(
+                    component_iter = tqdm(
                         components, unit="files", leave=False
                     )
                     for info in component_iter:
@@ -412,7 +412,7 @@ def main(*argv):
             inputs = [p.replace(".zip", "").replace(".SAFE", "") for p in args.inputs]
             products_tree[""].extend(inputs)
 
-        items = pbar = tqdm.tqdm(products_tree.items())
+        items = pbar = tqdm(products_tree.items())
         for folder, products in items:
             pbar.set_description(folder if folder else 'DOWNLOAD')
             outpath = outroot / folder
