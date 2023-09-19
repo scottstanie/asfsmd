@@ -10,7 +10,7 @@ import aiohttp
 from .common import AbstractClient, Auth, Url
 
 
-class FsspacClient(AbstractClient):
+class FsspecClient(AbstractClient):
     """Fsspec based asfsmd client."""
 
     def __init__(self, auth: Auth, block_size: Optional[int] = None):
@@ -35,4 +35,4 @@ class FsspacClient(AbstractClient):
                 yield zf
 
 
-Client = FsspacClient
+Client = FsspecClient
