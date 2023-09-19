@@ -199,6 +199,11 @@ def _get_parser(subparsers=None):
         action="store_true",
         help="Download measurement files."
     )
+    parser.add_argument(
+        "--preview",
+        action="store_true",
+        help="Download preview files."
+    )
 
     # Positional arguments
     parser.add_argument(
@@ -252,7 +257,7 @@ def main(*argv):
         patterns = make_patterns(
             beam=args.beam, pol=args.pol,
             cal=args.cal, noise=args.noise, rfi=args.rfi,
-            data=args.data,
+            data=args.data, preview=args.preview,
         )
 
         rootkey = ''

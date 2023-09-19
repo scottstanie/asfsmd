@@ -67,7 +67,7 @@ def query(products):
 
 
 def make_patterns(
-    beam="*", pol="??", cal=False, noise=False, rfi=False, data=False,
+    beam="*", pol="??", cal=False, noise=False, rfi=False, data=False, preview=False
 ):
     """Generate a list of patterns according to the specified options.
 
@@ -91,6 +91,8 @@ def make_patterns(
         patterns.append(f"{head}/calibration/noise-{tail}")
     if rfi:
         patterns.append(f"{head}/rfi/rfi-{tail}")
+    if preview:
+        patterns.append("S1*.SAFE/preview/*.???")
 
     if data:
         patterns.append(f"S1*.SAFE/measurement/s1?-{beam}-???-{pol}-*.tiff")
