@@ -181,8 +181,18 @@ def download_annotations(
     outdir: PathType = ".",
     auth: Auth = None,
     block_size: Optional[int] = BLOCKSIZE,
+    overwrite: bool = False,
 ):
     """Download annotations for the specified Sentinel-1 products."""
+    remaining = []
+    for product in products:
+        product_name = pathlib.Path(urlparse(product).path).stem
+        targetdir = pathlib.Path(outdir) / (product_name + ".SAFE")
+        if not targetdir.exists():
+            remaining.append(product)
+        elif overwrite:
+            remaining.append(product)
+
     if os.environ.get("ASFSMD_CLIENT") == "s3fs":
         from asfsmd.s3fs_client import get_s3_direct_urls
         urls = get_s3_direct_urls(products)

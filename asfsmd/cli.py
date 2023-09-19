@@ -188,6 +188,11 @@ def _get_parser(subparsers=None):
         help="Choose only one polarization to download. "
         "If not provided both polarizations are downloaded.",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing files in the output directory.",
+    )
 
     # Additional file downloads
     parser.add_argument(
@@ -303,6 +308,7 @@ def main(*argv):
                     auth=auth,
                     patterns=patterns,
                     block_size=args.block_size * MB,
+                    overwrite=args.overwrite,
                 )
 
     except Exception as exc:  # noqa: B902
