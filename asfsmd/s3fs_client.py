@@ -11,6 +11,7 @@ from .common import AbstractClient, Auth, Url
 
 import earthaccess
 
+
 class S3FSClient(AbstractClient):
     """S3Fs based asfsmd client."""
 
@@ -18,7 +19,6 @@ class S3FSClient(AbstractClient):
         """Initialize the s3fs based client."""
         earthaccess.login()
         self._fs = earthaccess.get_s3fs_session("ASF")
-
 
     @contextlib.contextmanager
     def open_zip_archive(self, url: Url) -> zipfile.ZipFile:
@@ -31,8 +31,11 @@ class S3FSClient(AbstractClient):
 Client = S3FSClient
 
 
-def get_s3_direct_urls(safe_names: list[str], max_workers: int = 5) -> str | None:
+def get_s3_direct_urls(
+    safe_names: list[str], max_workers: int = 5
+) -> str | None:
     """Get the concept urls for a list of SAFE granules."""
+
     def _get_url(safe_name):
         try:
             item_url = "https://cmr.earthdata.nasa.gov/stac/ASF/collections/SENTINEL-1{sat}_SLC.v1/items/{safe_name}-SLC"
@@ -46,7 +49,9 @@ def get_s3_direct_urls(safe_names: list[str], max_workers: int = 5) -> str | Non
             # Get the "Concept" url which has the S2 bucked
             # example: "https://cmr.earthdata.nasa.gov/search/concepts/G1345380784-ASF.json"
             concept_url = [
-                link["href"] for link in js["links"] if link["href"].endswith("-ASF.json")
+                link["href"]
+                for link in js["links"]
+                if link["href"].endswith("-ASF.json")
             ][-1]
 
             # Now using the concept url, get the S3 bucket in one of the links.
@@ -56,13 +61,15 @@ def get_s3_direct_urls(safe_names: list[str], max_workers: int = 5) -> str | Non
             resp.raise_for_status()
             js = resp.json()
             s3_url = [
-                link["href"] for link in js["links"] if link["href"].startswith("s3://")
+                link["href"]
+                for link in js["links"]
+                if link["href"].startswith("s3://")
             ][0]
             return s3_url
         except Exception as e:
             print(f"{safe_name} failed: {e}")
             return None
-    
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         urls = list(executor.map(_get_url, safe_names))
     return urls
