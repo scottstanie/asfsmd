@@ -56,7 +56,6 @@ def get_s3_direct_urls(
 
             # Now using the concept url, get the S3 bucket in one of the links.
             # It will be the one that starts with "s3://"
-            # e.g.: https://cmr.earthdata.nasa.gov/search/concepts/G1345380785-ASF.json
             resp = requests.get(concept_url)
             resp.raise_for_status()
             js = resp.json()
