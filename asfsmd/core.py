@@ -28,7 +28,7 @@ _log = logging.getLogger(__name__)
 
 
 def _get_client_type():
-    implementations = ["httpio", "fsspec", "remotezip"]
+    implementations = ["httpio", "fsspec", "remotezip", "s3fs"]
     if os.environ.get("ASFSMD_CLIENT") in implementations:
         name = os.environ.get("ASFSMD_CLIENT")
         name = f".{name}_client"
@@ -183,14 +183,18 @@ def download_annotations(
     block_size: Optional[int] = BLOCKSIZE,
 ):
     """Download annotations for the specified Sentinel-1 products."""
-    results = query(products)
-    if len(results) != len(products):
-        warnings.warn(
-            f"only {len(results)} of the {len(products)} requested products "
-            f"found on the remote server"
-        )
+    if os.environ.get("ASFSMD_CLIENT") == "s3fs":
+        from s3fs_client import get_s3_direct_urls
+        urls = get_s3_direct_urls(products)
+    else:
+        results = query(products)
+        if len(results) != len(products):
+            warnings.warn(
+                f"only {len(results)} of the {len(products)} requested products "
+                f"found on the remote server"
+            )
 
-    urls = [item.properties["url"] for item in results]
+        urls = [item.properties["url"] for item in results]
 
     download_components_from_urls(
         urls,
