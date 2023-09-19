@@ -184,7 +184,7 @@ def download_annotations(
 ):
     """Download annotations for the specified Sentinel-1 products."""
     if os.environ.get("ASFSMD_CLIENT") == "s3fs":
-        from s3fs_client import get_s3_direct_urls
+        from asfsmd.s3fs_client import get_s3_direct_urls
         urls = get_s3_direct_urls(products)
     else:
         results = query(products)
