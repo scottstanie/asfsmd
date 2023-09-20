@@ -195,12 +195,12 @@ def download_annotations(
 
     if os.environ.get("ASFSMD_CLIENT") == "s3fs":
         from asfsmd.s3fs_client import get_s3_direct_urls
-        urls = get_s3_direct_urls(products)
+        urls = get_s3_direct_urls(remaining)
     else:
-        results = query(products)
-        if len(results) != len(products):
+        results = query(remaining)
+        if len(results) != len(remaining):
             warnings.warn(
-                f"only {len(results)} of the {len(products)} requested products "
+                f"only {len(results)} of the {len(remaining)} requested products "
                 f"found on the remote server"
             )
 
