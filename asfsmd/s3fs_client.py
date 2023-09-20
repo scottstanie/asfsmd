@@ -52,7 +52,7 @@ def _get_s3_url(safe_name: str) -> str:
     cmr_collection_id = _get_cmr_concept_id(safe_name)
     cmr_query_url = f"https://cmr.earthdata.nasa.gov/search/granules.json?collection_concept_id={cmr_collection_id}&producer_granule_id={safe_name}"
     resp = requests.get(
-        cmr_query_url, headers={"Authorization": f"Bearer {_get_edl_token()}"}
+        cmr_query_url, headers={"Authorization": f"Bearer {_get_edl_token()['access_token']}"}
     )
     resp.raise_for_status()
     js = resp.json()
