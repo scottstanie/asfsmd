@@ -12,13 +12,15 @@ from .common import AbstractClient, Auth, Url
 import earthaccess
 
 
+earthaccess.login()
+FS = earthaccess.get_s3fs_session("ASF")
+
 class S3FSClient(AbstractClient):
     """S3Fs based asfsmd client."""
 
     def __init__(self, auth: Auth, block_size: Optional[int] = None):
         """Initialize the s3fs based client."""
-        earthaccess.login()
-        self._fs = earthaccess.get_s3fs_session("ASF")
+        self._fs = FS
 
     @contextlib.contextmanager
     def open_zip_archive(self, url: Url) -> zipfile.ZipFile:
