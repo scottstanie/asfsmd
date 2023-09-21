@@ -2,6 +2,7 @@
 
 import zipfile
 import contextlib
+import logging
 from typing import Optional
 
 import requests
@@ -17,6 +18,8 @@ COLLECTION_CONCEPT_ID_S1B = "C1327985661-ASF"
 CMR_AUTH = earthaccess.login()
 FS = earthaccess.get_s3fs_session("ASF")
 earthaccess.get_s3_credentials()
+
+_log = logging.getLogger(__name__)
 
 
 class S3FSClient(AbstractClient):
@@ -48,7 +51,7 @@ def _get_edl_token() -> dict[str, str]:
     return CMR_AUTH.token
 
 
-def _get_s3_url(safe_name: str) -> str:
+def _get_s3_url(safe_name: str) -> str | None:
     cmr_collection_id = _get_cmr_concept_id(safe_name)
     cmr_query_url = f"https://cmr.earthdata.nasa.gov/search/granules.json?collection_concept_id={cmr_collection_id}&producer_granule_id={safe_name}"
     resp = requests.get(
@@ -56,11 +59,22 @@ def _get_s3_url(safe_name: str) -> str:
     )
     resp.raise_for_status()
     js = resp.json()
-    s3_url = js["feed"]["entry"][0]["links"]
-    # Get the one which starts with "s3://"
-    s3_url = [
-        link["href"] for link in s3_url if link["href"].startswith("s3://")
-    ][0]
+    
+    try:
+        s3_url = js["feed"]["entry"][0]["links"]
+    except IndexError:
+        _log.error(f"Could not find links for {safe_name} in CMR")
+        return None
+
+    try:
+        # Get the one which starts with "s3://"
+        s3_url = [
+            link["href"] for link in s3_url if link["href"].startswith("s3://")
+        ][0]
+    except IndexError:
+        _log.error(f"Could not S3 link for {safe_name} in CMR")
+        return None
+
     return s3_url
 
 
@@ -105,4 +119,4 @@ def get_s3_direct_urls(
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         urls = list(executor.map(_get_s3_url, safe_names))
-    return urls
+    return [u for u in urls if u is not None]
