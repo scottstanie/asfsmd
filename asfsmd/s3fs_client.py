@@ -38,9 +38,12 @@ class S3FSClient(AbstractClient):
     def __init__(self, auth: Auth, block_size: Optional[int] = None):
         """Initialize the s3fs based client."""
         self._fs = s3fs.S3FileSystem(
-            key=os.environ["AWS_ACCESS_KEY_ID"],
-            secret=os.environ["AWS_SECRET_ACCESS_KEY"],
-            token=os.environ["AWS_SESSION_TOKEN"],
+            # key=os.environ["ACCESS_KEY_ID"],
+            # secret=os.environ["SECRET_ACCESS_KEY"],
+            # token=os.environ["SESSION_TOKEN"],
+            key=os.environ["accessKeyId"],
+            secret=os.environ["secretAccessKey"],
+            token=os.environ["sessionToken"],
         )
 
     @contextlib.contextmanager
