@@ -222,6 +222,8 @@ def _get_auth(
 ) -> Auth:
     if user is not None and pwd is not None:
         return Auth(user, pwd)
+    elif os.environ.get("ASFSMD_CLIENT") == "s3fs":
+        return None
     elif user is None and pwd is None:
         db = netrc.netrc()
         user, _, pwd = db.authenticators(hostname)
