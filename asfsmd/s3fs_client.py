@@ -12,12 +12,12 @@ from concurrent.futures import ThreadPoolExecutor
 import s3fs
 from .common import AbstractClient, Auth, Url
 
-import earthaccess
+# import earthaccess
 
 
 COLLECTION_CONCEPT_ID_S1A = "C1214470488-ASF"
 COLLECTION_CONCEPT_ID_S1B = "C1327985661-ASF"
-CMR_AUTH = earthaccess.login()
+# CMR_AUTH = earthaccess.login()
 # FS = earthaccess.get_s3fs_session("ASF")
 # earthaccess.get_s3_credentials()
 # FS = s3fs.S3FileSystem(
@@ -62,7 +62,8 @@ def _get_cmr_concept_id(safe_name: str) -> str:
 
 
 def _get_edl_token() -> dict[str, str]:
-    return CMR_AUTH.token
+    # return CMR_AUTH.token
+    return os.environ["CMR_TOKEN"]
 
 
 def _get_s3_url(safe_name: str) -> str | None:
