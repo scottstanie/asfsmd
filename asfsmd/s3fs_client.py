@@ -7,7 +7,8 @@ import logging
 from typing import Optional
 
 import requests
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
+import backoff
 
 import s3fs
 from .common import AbstractClient, Auth, Url
@@ -69,6 +70,7 @@ def _get_edl_token() -> dict[str, str]:
     return os.environ["CMR_TOKEN"]
 
 
+@backoff.on_exception(backoff.expo, requests.exceptions.HTTPError, max_time=30)
 def _get_s3_url(safe_name: str) -> str | None:
     cmr_collection_id = _get_cmr_concept_id(safe_name)
     cmr_query_url = f"https://cmr.earthdata.nasa.gov/search/granules.json?collection_concept_id={cmr_collection_id}&producer_granule_id={safe_name}"
@@ -135,6 +137,13 @@ def get_s3_direct_urls(
 ) -> str | None:
     """Get the concept urls for a list of SAFE granules."""
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        urls = list(executor.map(_get_s3_url, safe_names))
+    # with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    #     urls = list(executor.map(_get_s3_url, safe_names))
+    urls = []
+    for n in safe_names:
+        try:
+            urls.append(_get_s3_url(n))
+        except Exception as e:
+            print(f"{n} failed: {e}")
+            urls.append(None)
     return [u for u in urls if u is not None]
